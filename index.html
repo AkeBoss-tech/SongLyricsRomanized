@@ -48,10 +48,18 @@
             margin-bottom: 10px;
         }
     </style>
+    <script
+        async
+        defer
+        src="https://cdn.jsdelivr.net/npm/transliteration@2.1.8/dist/browser/bundle.umd.min.js"
+    ></script>
+    <script>
+        console.log(transliterate('你好'));
+    </script>
 </head>
 
 <body>
-    <h1>Search Lyrics</h1>
+    <h1>Get the Lyrics of any song in English!</h1>
     <div id="instructions">Start typing a song name, then select it from the results below.</div>
     <input type="text" id="songInput" placeholder="Enter song name" required>
 
@@ -67,6 +75,7 @@
         <p id="song-release-date"></p>
     </div>
     <h2>Lyrics</h2>
+    <button onclick="transliterateText()">Make English</button>
     <div id="lyrics">Select a song to view lyrics.</div>
 
     <script>
@@ -197,6 +206,23 @@
             document.getElementById("song-album").textContent = `Album: ${albumName}`;
             document.getElementById("song-producer").textContent = `Producer: ${producer}`;
             document.getElementById("song-release-date").textContent = `Release Date: ${releaseDate}`;
+        }
+
+        function transliterateText() {
+            // loop through all the text nodes in the lyrics div
+            // change the text of each node to its transliterated version
+            const walker = document.createTreeWalker(lyricsDiv, NodeFilter.SHOW_TEXT);
+
+            let node;
+            while (node = walker.nextNode()) {
+                var transliteratedText = transliterate(node.textContent);
+                // capitalize the first letter of the string
+                transliteratedText = transliteratedText.charAt(0).toUpperCase() + transliteratedText.slice(1); 
+                node.textContent = transliteratedText;
+            }
+
+            // update the lyrics div with the new text
+            lyricsDiv.innerHTML = walker.root.innerHTML;
         }
     </script>
 </body>
