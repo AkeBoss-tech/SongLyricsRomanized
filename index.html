@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
             font-family: Arial, sans-serif;
             margin: 20px;
         }
+
         #lyrics {
             white-space: pre-wrap;
             background: #f4f4f4;
@@ -16,12 +18,42 @@
             border-radius: 5px;
             margin-top: 20px;
         }
+
+        ul {
+            padding-inline-start: 0;
+        }
+
+        ul#results li {
+            list-style: none;
+            margin: 10px 0;
+        }
+
+        ul#results li a {
+            text-decoration: none;
+            color: white;
+            background-color: #007BFF;
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 16px;
+        }
+
+        ul#results li a:hover {
+            background-color: #0056b3;
+        }
+
+        #instructions {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
+
 <body>
     <h1>Search Lyrics</h1>
+    <div id="instructions">Start typing a song name, then select it from the results below.</div>
     <input type="text" id="songInput" placeholder="Enter song name" required>
-    <button id="searchButton">Search</button>
 
     <h2>Results</h2>
     <ul id="results"></ul>
@@ -39,21 +71,26 @@
 
     <script>
         const proxy = "https://corsproxy.io/?"; // Public CORS proxy
-        const searchButton = document.getElementById("searchButton");
         const songInput = document.getElementById("songInput");
         const resultsList = document.getElementById("results");
         const lyricsDiv = document.getElementById("lyrics");
 
-        var songDoc = null;
+        let songDoc = null;
+        let debounceTimer;
 
-        searchButton.addEventListener("click", async () => {
-            const query = songInput.value.trim();
-            if (!query) return;
+        songInput.addEventListener("input", () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                const query = songInput.value.trim();
+                if (query) searchSongs(query);
+            }, 500); // Adjust delay as needed
+        });
 
+        async function searchSongs(query) {
             resultsList.innerHTML = '';
             lyricsDiv.textContent = 'Select a song to view lyrics.';
             const searchUrl = `https://www.google.com/search?q=site:genius.com+${encodeURIComponent(query)}`;
-            
+
             const response = await fetch(proxy + searchUrl);
             console.log(response);
             const html = await response.text();
@@ -63,18 +100,31 @@
 
             const geniusLinks = links.filter(link => link.includes("https://genius.com"));
             console.log(geniusLinks);
+
+            if (geniusLinks.length === 0) {
+                resultsList.innerHTML = '<li>No results found.</li>';
+                return;
+            }
+
             geniusLinks.slice(0, 3).forEach(link => {
                 const li = document.createElement("li");
-                songTitle = decodeURIComponent(link.split("/").pop().replace(/-/g, " "));
-                // make songTitle title case
-                songTitle = songTitle.split(" ").map(word => word[0].toUpperCase() + word.slice(1)).join(" ");
+                const songTitle = decodeURIComponent(link.split("/").pop().replace(/-/g, " "))
+                    .split(" ")
+                    .map(word => word[0].toUpperCase() + word.slice(1))
+                    .join(" ");
 
-                li.textContent = songTitle;
-                li.style.cursor = "pointer";
-                li.addEventListener("click", () => updateSong(link));
+                const a = document.createElement("a");
+                a.href = "#";
+                a.textContent = songTitle;
+                a.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    updateSong(link);
+                });
+
+                li.appendChild(a);
                 resultsList.appendChild(li);
             });
-        });
+        }
 
         async function updateSong(url) {
             await fetchLyrics(url);
@@ -83,8 +133,6 @@
         }
 
         function cleanHTML(text) {
-            // make any <br> tags into newlines
-            // and remove any other html tags
             return text.replace(/<br>/g, "\n").replace(/<[^>]*>?/gm, '');
         }
 
@@ -92,30 +140,26 @@
             lyricsDiv.textContent = "Loading lyrics...";
             const response = await fetch(proxy + url);
             const html = await response.text();
-            
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
             songDoc = doc;
-        
         }
 
         function displayLyrics() {
             const lyricsContainers = songDoc.querySelectorAll("[class^='Lyrics__Container']");
             if (lyricsContainers.length > 0) {
-                // Extract and sanitize lyrics content
                 const sanitizedLyrics = Array.from(lyricsContainers)
                     .map(container => {
                         const tempDiv = document.createElement("div");
                         tempDiv.innerHTML = container.innerHTML;
 
-                        // Replace links (<a> tags) with their text content
                         const links = tempDiv.querySelectorAll("a");
                         links.forEach(link => {
                             const textNode = document.createTextNode(cleanHTML(link.innerHTML));
                             link.replaceWith(textNode);
                         });
 
-                        return tempDiv.innerHTML; // Return sanitized content with <br> tags intact
+                        return tempDiv.innerHTML;
                     })
                     .join("\n");
 
@@ -131,45 +175,30 @@
                 return;
             }
 
-            // Extract song title
             const titleElement = songDoc.querySelector('h1[class^="SongHeaderdesktop__Title"] span');
             const songTitle = titleElement ? titleElement.textContent : "Unknown Title";
 
-            // Extract artists
             const artistElements = songDoc.querySelectorAll('div[class^="HeaderArtistAndTracklistdesktop__ListArtists"] a');
             const artists = artistElements.length > 0
                 ? Array.from(artistElements).map(artist => artist.textContent).join(", ")
                 : "Unknown Artists";
 
-            // Extract album
             const albumElement = songDoc.querySelector('div[class^="HeaderArtistAndTracklistdesktop__Tracklist"] a');
             const albumName = albumElement ? albumElement.textContent.trim() : "Unknown Album";
 
-            // Extract producer
             const producerElement = songDoc.querySelector('div[class^="HeaderCredits__List"] a');
             const producer = producerElement ? producerElement.textContent : "Unknown Producer";
 
-            // Extract release date
             const releaseDateElement = songDoc.querySelector('span[class^="LabelWithIcon__Label"]');
             const releaseDate = releaseDateElement ? releaseDateElement.textContent : "Unknown Release Date";
 
-            // Log the extracted information
-            console.log("Song Title:", songTitle);
-            console.log("Artists:", artists);
-            console.log("Album:", albumName);
-            console.log("Producer:", producer);
-            console.log("Release Date:", releaseDate);
-
-            // Display the information on the webpage (assumes you have elements with these IDs)
             document.getElementById("song-title").textContent = songTitle;
             document.getElementById("song-artists").textContent = `Artists: ${artists}`;
             document.getElementById("song-album").textContent = `Album: ${albumName}`;
             document.getElementById("song-producer").textContent = `Producer: ${producer}`;
             document.getElementById("song-release-date").textContent = `Release Date: ${releaseDate}`;
         }
-
-
-
     </script>
 </body>
+
 </html>
