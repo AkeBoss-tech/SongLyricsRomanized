@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #lyrics {
+            white-space: pre-wrap;
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Search Lyrics</h1>
+    <input type="text" id="songInput" placeholder="Enter song name" required>
+    <button id="searchButton">Search</button>
+
+    <h2>Results</h2>
+    <ul id="results"></ul>
+
+    <h2>Lyrics</h2>
+    <div id="lyrics">Select a song to view lyrics.</div>
+
+    <script>
+        const proxy = "https://corsproxy.io/?"; // Public CORS proxy
+        const searchButton = document.getElementById("searchButton");
+        const songInput = document.getElementById("songInput");
+        const resultsList = document.getElementById("results");
+        const lyricsDiv = document.getElementById("lyrics");
+
+        searchButton.addEventListener("click", async () => {
+            const query = songInput.value.trim();
+            if (!query) return;
+
+            resultsList.innerHTML = '';
+            lyricsDiv.textContent = 'Select a song to view lyrics.';
+            const searchUrl = `https://www.google.com/search?q=site:genius.com+${encodeURIComponent(query)}`;
+            
+            const response = await fetch(proxy + searchUrl);
+            console.log(response);
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+            const links = [...doc.querySelectorAll("a")].map(a => a.href);
+
+            const geniusLinks = links.filter(link => link.includes("https://genius.com"));
+            console.log(geniusLinks);
+            geniusLinks.slice(0, 5).forEach(link => {
+                const li = document.createElement("li");
+                const songTitle = decodeURIComponent(link.split("/").pop().replace(/-/g, " "));
+                li.textContent = songTitle;
+                li.style.cursor = "pointer";
+                li.addEventListener("click", () => fetchLyrics(link));
+                resultsList.appendChild(li);
+            });
+        });
+
+        async function fetchLyrics(url) {
+            lyricsDiv.textContent = "Loading lyrics...";
+            const response = await fetch(proxy + url);
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, "text/html");
+
+            const lyricsContainers = doc.querySelectorAll("[class^='Lyrics__Container']");
+            if (lyricsContainers.length > 0) {
+                // Extract and sanitize lyrics content
+                const sanitizedLyrics = Array.from(lyricsContainers)
+                    .map(container => {
+                        const tempDiv = document.createElement("div");
+                        tempDiv.innerHTML = container.innerHTML;
+
+                        // Remove unwanted links (<a> tags)
+                        const links = tempDiv.querySelectorAll("a");
+                        links.forEach(link => link.remove());
+
+                        return tempDiv.innerHTML; // Return sanitized content with <br> tags intact
+                    })
+                    .join("\n");
+
+                lyricsDiv.innerHTML = sanitizedLyrics;
+            } else {
+                lyricsDiv.textContent = "Lyrics not found.";
+            }
+        }
+
+    </script>
+</body>
+</html>
