@@ -26,8 +26,15 @@
     <h2>Results</h2>
     <ul id="results"></ul>
 
-    <h2>Lyrics</h2>
     <img id="image"></img>
+    <div id="song-info">
+        <h2 id="song-title"></h2>
+        <p id="song-artists"></p>
+        <p id="song-album"></p>
+        <p id="song-producer"></p>
+        <p id="song-release-date"></p>
+    </div>
+    <h2>Lyrics</h2>
     <div id="lyrics">Select a song to view lyrics.</div>
 
     <script>
@@ -72,7 +79,7 @@
         async function updateSong(url) {
             await fetchLyrics(url);
             displayLyrics();
-            displayImage();
+            displayInfo();
         }
 
         function cleanHTML(text) {
@@ -118,35 +125,49 @@
             }
         }
 
-        function displayImage() {
-            // Ensure songDoc is parsed and contains valid HTML
+        function displayInfo() {
             if (!songDoc) {
                 console.error("songDoc is null or undefined.");
                 return;
             }
 
-            // Get all image elements in the parsed document
-            const images = songDoc.querySelectorAll("img");
-            console.log("Found images:", images);
+            // Extract song title
+            const titleElement = songDoc.querySelector('h1[class^="SongHeaderdesktop__Title"] span');
+            const songTitle = titleElement ? titleElement.textContent : "Unknown Title";
 
-            if (images.length > 0) {
-                const firstImage = images[0]; // Select the first image
-                const imageUrl = firstImage.src || firstImage.getAttribute("data-src");
+            // Extract artists
+            const artistElements = songDoc.querySelectorAll('div[class^="HeaderArtistAndTracklistdesktop__ListArtists"] a');
+            const artists = artistElements.length > 0
+                ? Array.from(artistElements).map(artist => artist.textContent).join(", ")
+                : "Unknown Artists";
 
-                if (imageUrl) {
-                    const imageElement = document.getElementById("image");
-                    imageElement.src = imageUrl; // Set the image source
-                    imageElement.style.display = "block"; // Make it visible
-                    console.log("Image displayed:", imageUrl);
-                } else {
-                    console.warn("First image does not have a valid src or data-src.");
-                }
-            } else {
-                console.warn("No images found in the document.");
-                const imageElement = document.getElementById("image");
-                imageElement.style.display = "none"; // Hide the image if no valid image is found
-            }
+            // Extract album
+            const albumElement = songDoc.querySelector('div[class^="HeaderArtistAndTracklistdesktop__Tracklist"] a');
+            const albumName = albumElement ? albumElement.textContent.trim() : "Unknown Album";
+
+            // Extract producer
+            const producerElement = songDoc.querySelector('div[class^="HeaderCredits__List"] a');
+            const producer = producerElement ? producerElement.textContent : "Unknown Producer";
+
+            // Extract release date
+            const releaseDateElement = songDoc.querySelector('span[class^="LabelWithIcon__Label"]');
+            const releaseDate = releaseDateElement ? releaseDateElement.textContent : "Unknown Release Date";
+
+            // Log the extracted information
+            console.log("Song Title:", songTitle);
+            console.log("Artists:", artists);
+            console.log("Album:", albumName);
+            console.log("Producer:", producer);
+            console.log("Release Date:", releaseDate);
+
+            // Display the information on the webpage (assumes you have elements with these IDs)
+            document.getElementById("song-title").textContent = songTitle;
+            document.getElementById("song-artists").textContent = `Artists: ${artists}`;
+            document.getElementById("song-album").textContent = `Album: ${albumName}`;
+            document.getElementById("song-producer").textContent = `Producer: ${producer}`;
+            document.getElementById("song-release-date").textContent = `Release Date: ${releaseDate}`;
         }
+
 
 
     </script>
