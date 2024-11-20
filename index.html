@@ -27,6 +27,7 @@
     <ul id="results"></ul>
 
     <h2>Lyrics</h2>
+    <img id="image"></img>
     <div id="lyrics">Select a song to view lyrics.</div>
 
     <script>
@@ -35,6 +36,8 @@
         const songInput = document.getElementById("songInput");
         const resultsList = document.getElementById("results");
         const lyricsDiv = document.getElementById("lyrics");
+
+        var songDoc = null;
 
         searchButton.addEventListener("click", async () => {
             const query = songInput.value.trim();
@@ -61,10 +64,16 @@
 
                 li.textContent = songTitle;
                 li.style.cursor = "pointer";
-                li.addEventListener("click", () => fetchLyrics(link));
+                li.addEventListener("click", () => updateSong(link));
                 resultsList.appendChild(li);
             });
         });
+
+        async function updateSong(url) {
+            await fetchLyrics(url);
+            displayLyrics();
+            displayImage();
+        }
 
         function cleanHTML(text) {
             // make any <br> tags into newlines
@@ -76,10 +85,15 @@
             lyricsDiv.textContent = "Loading lyrics...";
             const response = await fetch(proxy + url);
             const html = await response.text();
+            
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, "text/html");
+            songDoc = doc;
+        
+        }
 
-            const lyricsContainers = doc.querySelectorAll("[class^='Lyrics__Container']");
+        function displayLyrics() {
+            const lyricsContainers = songDoc.querySelectorAll("[class^='Lyrics__Container']");
             if (lyricsContainers.length > 0) {
                 // Extract and sanitize lyrics content
                 const sanitizedLyrics = Array.from(lyricsContainers)
@@ -101,6 +115,36 @@
                 lyricsDiv.innerHTML = sanitizedLyrics;
             } else {
                 lyricsDiv.textContent = "Lyrics not found.";
+            }
+        }
+
+        function displayImage() {
+            // Ensure songDoc is parsed and contains valid HTML
+            if (!songDoc) {
+                console.error("songDoc is null or undefined.");
+                return;
+            }
+
+            // Get all image elements in the parsed document
+            const images = songDoc.querySelectorAll("img");
+            console.log("Found images:", images);
+
+            if (images.length > 0) {
+                const firstImage = images[0]; // Select the first image
+                const imageUrl = firstImage.src || firstImage.getAttribute("data-src");
+
+                if (imageUrl) {
+                    const imageElement = document.getElementById("image");
+                    imageElement.src = imageUrl; // Set the image source
+                    imageElement.style.display = "block"; // Make it visible
+                    console.log("Image displayed:", imageUrl);
+                } else {
+                    console.warn("First image does not have a valid src or data-src.");
+                }
+            } else {
+                console.warn("No images found in the document.");
+                const imageElement = document.getElementById("image");
+                imageElement.style.display = "none"; // Hide the image if no valid image is found
             }
         }
 
