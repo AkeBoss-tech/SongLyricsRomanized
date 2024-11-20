@@ -53,15 +53,24 @@
 
             const geniusLinks = links.filter(link => link.includes("https://genius.com"));
             console.log(geniusLinks);
-            geniusLinks.slice(0, 5).forEach(link => {
+            geniusLinks.slice(0, 3).forEach(link => {
                 const li = document.createElement("li");
-                const songTitle = decodeURIComponent(link.split("/").pop().replace(/-/g, " "));
+                songTitle = decodeURIComponent(link.split("/").pop().replace(/-/g, " "));
+                // make songTitle title case
+                songTitle = songTitle.split(" ").map(word => word[0].toUpperCase() + word.slice(1)).join(" ");
+
                 li.textContent = songTitle;
                 li.style.cursor = "pointer";
                 li.addEventListener("click", () => fetchLyrics(link));
                 resultsList.appendChild(li);
             });
         });
+
+        function cleanHTML(text) {
+            // make any <br> tags into newlines
+            // and remove any other html tags
+            return text.replace(/<br>/g, "\n").replace(/<[^>]*>?/gm, '');
+        }
 
         async function fetchLyrics(url) {
             lyricsDiv.textContent = "Loading lyrics...";
@@ -78,9 +87,12 @@
                         const tempDiv = document.createElement("div");
                         tempDiv.innerHTML = container.innerHTML;
 
-                        // Remove unwanted links (<a> tags)
+                        // Replace links (<a> tags) with their text content
                         const links = tempDiv.querySelectorAll("a");
-                        links.forEach(link => link.remove());
+                        links.forEach(link => {
+                            const textNode = document.createTextNode(cleanHTML(link.innerHTML));
+                            link.replaceWith(textNode);
+                        });
 
                         return tempDiv.innerHTML; // Return sanitized content with <br> tags intact
                     })
@@ -91,6 +103,7 @@
                 lyricsDiv.textContent = "Lyrics not found.";
             }
         }
+
 
     </script>
 </body>
