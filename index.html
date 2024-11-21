@@ -48,9 +48,21 @@
             padding: 10px;
             border: none;
             border-radius: 5px;
-            margin: 20px 0;
+            margin: 0 0;
             font-size: 16px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
     
         #lyrics {
@@ -157,6 +169,7 @@
     <h1>Get the Lyrics of any song in English!</h1>
     <div id="instructions">Start typing a song name, then select it from the results below.</div>
     <input type="text" id="songInput" placeholder="Enter song name" required>
+    <button onclick="searchSongs(document.getElementById('songInput').value)">Search</button>
 
     <div id="results-stuff" style="display: none;">
         <h2>Results</h2>
@@ -195,7 +208,7 @@
             debounceTimer = setTimeout(() => {
                 const query = songInput.value.trim();
                 if (query) searchSongs(query);
-            }, 500); // Adjust delay as needed
+            }, 2000); // Adjust delay as needed
         });
 
         async function searchSongs(query) {
