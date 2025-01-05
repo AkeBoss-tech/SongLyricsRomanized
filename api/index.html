@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lyrics Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
+            color: white;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        #lyrics-stuff {
+            display: none;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #results-stuff {
+            display: none;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    
+        h1, h2 {
+            margin: 10px 0;
+        }
+    
+        input[type="text"] {
+            width: 80%;
+            max-width: 500px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            margin: 0 0;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        #lyrics {
+            white-space: pre-wrap;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-width: 100%;
+            width: 600px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+    
+        ul {
+            padding: 0;
+        }
+    
+        ul#results {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+    
+        ul#results li {
+            margin: 10px 0;
+        }
+    
+        ul#results li a {
+            text-decoration: none;
+            color: white;
+            background-color: #28a745;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+            max-width: 60%;
+        }
+    
+        ul#results li a:hover {
+            background-color: #218838;
+        }
+    
+        #instructions {
+            color: #e0e0e0;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+    
+        #song-info {
+            margin-top: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 100%;
+            width: 600px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            align-self: center;
+        }
+    
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+    
+        button:active {
+            transform: scale(1);
+        }
+    
+        img {
+            max-width: 100%;
+            height: auto;
+            margin: 20px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/transliteration@2.1.8/dist/browser/bundle.umd.min.js"></script>
+</head>
+
+<body>
+    <h1>Get the Lyrics of any song in English!</h1>
+    <div id="instructions">Start typing a song name, then select it from the results below.</div>
+    <input type="text" id="songInput" placeholder="Enter song name" required>
+    <button onclick="searchSongs()">Search</button>
+
+    <div id="results-stuff" style="display: none;">
+        <h2>Results</h2>
+        <ul id="results"></ul>
+    </div>
+    
+    <div id="lyrics-stuff" style="display: none;">
+        <h2>Lyrics</h2>
+        <button onclick="transliterateText()">Make English</button>
+        <div id="lyrics">Select a song to view lyrics.</div>
+    </div>
+
+    <script>
+        const resultsList = document.getElementById("results");
+        const lyricsDiv = document.getElementById("lyrics");
+        const showResults = document.getElementById("results-stuff");
+        const showLyrics = document.getElementById("lyrics-stuff");
+
+        async function searchSongs() {
+            const query = document.getElementById("songInput").value.trim();
+            if (!query) {
+                alert("Please enter a song name.");
+                return;
+            }
+
+            resultsList.innerHTML = '';
+            const response = await fetch(`/search?query=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            if (response.status !== 200) {
+                alert(data.error || 'Failed to fetch search results');
+                return;
+            }
+
+            if (!data.results.length) {
+                resultsList.innerHTML = '<li>No results found.</li>';
+                return;
+            }
+
+            showResults.style.display = "block";
+            data.results.forEach(result => {
+                const li = document.createElement("li");
+                const a = document.createElement("a");
+                a.href = "#";
+                a.textContent = result.title;
+                a.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    fetchLyrics(result.url);
+                });
+                li.appendChild(a);
+                resultsList.appendChild(li);
+            });
+        }
+
+        async function fetchLyrics(url) {
+            // remove /url?q= from the beginning of the URL
+            url = url.replace(/^\/url\?q=/, '');
+            console.log(url);
+
+            const response = await fetch(`/lyrics?url=${encodeURIComponent(url)}`);
+            const data = await response.json();
+
+            if (response.status !== 200) {
+                lyricsDiv.textContent = data.error || 'Failed to fetch lyrics.';
+                return;
+            }
+
+            lyricsDiv.textContent = data.lyrics;
+            showLyrics.style.display = "block";
+        }
+
+        function transliterateText() {
+            const walker = document.createTreeWalker(lyricsDiv, NodeFilter.SHOW_TEXT);
+            let node;
+            while (node = walker.nextNode()) {
+                const transliteratedText = transliterate(node.textContent);
+                node.textContent = transliteratedText.charAt(0).toUpperCase() + transliteratedText.slice(1);
+            }
+        }
+    </script>
+</body>
+
+</html>
