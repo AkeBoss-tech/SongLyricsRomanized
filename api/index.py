@@ -27,7 +27,7 @@ def search_songs():
     
     results = []
     for thing in response["hits"]: 
-        if thing.type != "song": continue
+        if thing["type"] != "song": continue
 
         title = thing["result"]["title"]
         link = thing["result"]["url"]
