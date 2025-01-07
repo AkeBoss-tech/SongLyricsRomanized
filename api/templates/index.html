@@ -209,19 +209,18 @@
                 a.textContent = result.title;
                 a.addEventListener("click", (event) => {
                     event.preventDefault();
-                    fetchLyrics(result.url);
+                    fetchLyrics(result.id);
                 });
                 li.appendChild(a);
                 resultsList.appendChild(li);
             });
         }
 
-        async function fetchLyrics(url) {
+        async function fetchLyrics(id) {
             // remove /url?q= from the beginning of the URL
-            url = url.replace(/^\/url\?q=/, '');
-            console.log(url);
+            console.log(id);
 
-            const response = await fetch(`/lyrics?url=${encodeURIComponent(url)}`);
+            const response = await fetch(`/lyrics?id=${encodeURIComponent(id)}`);
             const data = await response.json();
 
             if (response.status !== 200) {
