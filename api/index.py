@@ -26,7 +26,7 @@ def search_songs():
     print(response)
     
     results = []
-    for thing in response["response"]["hits"]: 
+    for thing in response["hits"]: 
         if thing.type != "song": continue
 
         title = thing["result"]["title"]
