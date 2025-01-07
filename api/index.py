@@ -10,6 +10,8 @@ genius = Genius(os.environ.get('GENIUS_ACCESS_TOKEN'))
 genius.remove_section_headers = True
 genius.skip_non_songs = True
 
+genius.search_songs("we are the champions", per_page=5)
+
 @app.route('/', methods=['GET'])
 def home():
     return render_template('index.html')
