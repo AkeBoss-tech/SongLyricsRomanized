@@ -53,10 +53,10 @@ def fetch_lyrics():
         return jsonify({'error': 'No URL provided'}), 400
     
     response = requests.get(CORS_PROXY + url)
-    if response.status_code != 200:
+    """ if response.status_code != 200:
         print("RESPONSE", response)
         print("RESPONSE TEXT", response.text)
-        return jsonify({'error': 'Failed to fetch lyrics'}), 500
+        return jsonify({'error': 'Failed to fetch lyrics'}), 500 """
 
     soup = BeautifulSoup(response.text, 'html.parser')
     lyrics_containers = soup.find_all('div', {'data-lyrics-container': 'true'})
