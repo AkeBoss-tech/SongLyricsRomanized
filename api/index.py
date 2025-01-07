@@ -46,13 +46,18 @@ def fetch_lyrics():
         return jsonify({'error': 'No query provided'})
     print(id_value)
     
-    song = genius.lyrics(song_id=id_value)
-    print(song)
+    song = genius.search_song(song_id=id_value)
 
     if song == None:
         return jsonify({'error': 'Song not found'})
     
-    return jsonify({'lyrics': song})
+
+    print(song.title)
+    print(song.lyrics)
+    print(song.stats)
+    print(song)
+    
+    return jsonify({'lyrics': song.lyrics, 'title': song.title, 'artist': song.artist, 'image_url': song.song_art_image_url, 'url': song.url, 'artist': song.primary_artist})
 
 
 if __name__ == '__main__':
