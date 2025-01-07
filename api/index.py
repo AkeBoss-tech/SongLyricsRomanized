@@ -20,7 +20,7 @@ def home():
 def search_songs():
     query = request.args.get('query', '').strip()
     if not query:
-        return jsonify({'error': 'No query provided'}), 400
+        return jsonify({'error': 'No query provided'})
     
     response = genius.search_songs(query, per_page=5)
     print(response)
@@ -42,6 +42,9 @@ def search_songs():
 @app.route('/lyrics', methods=['GET'])
 def fetch_lyrics():
     id_value = request.args.get('id', '').strip()
+    if not id_value:
+        return jsonify({'error': 'No query provided'})
+    print(id_value)
     
     song = genius.lyrics(song_id=id_value)
     print(song)

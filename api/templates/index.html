@@ -205,12 +205,15 @@
             data.results.forEach(result => {
                 const li = document.createElement("li");
                 const a = document.createElement("a");
+                const img = document.createElement("img");
+                img.src = result.image_url;
                 a.href = "#";
                 a.textContent = result.title;
                 a.addEventListener("click", (event) => {
                     event.preventDefault();
                     fetchLyrics(result.id);
                 });
+                a.appendChild(img);
                 li.appendChild(a);
                 resultsList.appendChild(li);
             });
