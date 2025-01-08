@@ -51,7 +51,6 @@ def fetch_lyrics():
     if song == None:
         return jsonify({'error': 'Song not found'})
     
-
     print(song.title)
     print(song.lyrics)
     print(song.stats)
@@ -59,6 +58,25 @@ def fetch_lyrics():
     
     return jsonify({'lyrics': song.lyrics, 'title': song.title, 'artist': song.artist, 'image_url': song.song_art_image_url, 'url': song.url, 'artist': song.primary_artist})
 
+@app.route('/lyrics_name', methods=['GET'])
+def fetch_lyrics():
+    query = request.args.get('query', '').strip()
+    if not query:
+        return jsonify({'error': 'No query provided'})
+    
+    response = genius.search_songs(query, per_page=5)
+    
+    song = genius.search_song(song_id=response["hits"][0]["result"]["id"])
+
+    if song == None:
+        return jsonify({'error': 'Song not found'})
+    
+    print(song.title)
+    print(song.lyrics)
+    print(song.stats)
+    print(song)
+    
+    return jsonify({'lyrics': song.lyrics, 'title': song.title, 'artist': song.artist, 'image_url': song.song_art_image_url, 'url': song.url, 'artist': song.primary_artist})
 
 if __name__ == '__main__':
     app.run(debug=True)
