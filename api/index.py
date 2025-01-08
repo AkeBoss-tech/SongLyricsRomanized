@@ -59,7 +59,7 @@ def fetch_lyrics():
     return jsonify({'lyrics': song.lyrics, 'title': song.title, 'artist': song.artist, 'image_url': song.song_art_image_url, 'url': song.url, 'artist': song.primary_artist})
 
 @app.route('/lyricname', methods=['GET'])
-def fetch_lyrics():
+def fetch_lyrics_from_name():
     query = request.args.get('query', '').strip()
     if not query:
         return jsonify({'error': 'No query provided'})
